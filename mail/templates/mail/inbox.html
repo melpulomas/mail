@@ -1,0 +1,56 @@
+{% extends "mail/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <h2>{{ request.user.email }}</h2>
+
+    <button class="btn btn-sm btn-outline-primary" id="inbox">Inbox</button>
+    <button class="btn btn-sm btn-outline-primary" id="compose">Compose</button>
+    <button class="btn btn-sm btn-outline-primary" id="sent">Sent</button>
+    <button class="btn btn-sm btn-outline-primary" id="archived">Archived</button>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
+    <hr>
+    <div id="view-error" class="alert alert-danger"></div>
+    <div id="view-emails" class="list-group"></div>
+    <div id="view-read" class="card card-body">
+        <h5 id="read-from" class="card-title"></h5>
+        <h6 id="read-recipients" class="card-subtitle mb-2 text-muted"></h6>
+        <h6 id="read-timestamp" class="card-subtitle mb-2 text-muted"></h6>
+        <p id="read-subject"></p>
+        <hr>
+        <p id="read-body"></p>
+        <button class="btn btn-primary mr-2" id="read-reply">Reply</button>
+        <button class="btn btn-secondary mr-2" id="read-archive"></button>
+    </div>
+    <div id="view-compose">
+        <h3>New Email</h3>
+        <form id="compose-form">
+            <div class="form-group">
+                From: <input disabled class="form-control" value="{{ request.user.email }}">
+            </div>
+            <div class="form-group">
+                <small><strong>At least one recipient required</strong></small>
+                <input id="form-compose-recipients" data-label="Recipients" placeholder="To (required)"
+                       class="form-control">
+                <div class="invalid-feedback font-weight-bold" id="compose-form-alert">Please include at least one
+                    recipient.
+                </div>
+            </div>
+            <div class="form-group">
+                <small><strong>Please include a subject.</strong></small>
+                <input class="form-control" id="form-compose-subject" data-label="Subject"
+                       placeholder="Subject (required)">
+                <div class="invalid-feedback font-weight-bold">Subject is not required, but recommended.</div>
+            </div>
+            <small><strong>Write the body of the email.</strong></small>
+            <textarea class="form-control" id="form-compose-body" data-label="Email Body"
+                      placeholder="Body (required)"></textarea>
+            <div class="invalid-feedback font-weight-bold">Please include a body for this email.</div>
+            <input type="submit" class="btn btn-primary my-2"/>
+        </form>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'mail/inbox.js' %}"></script>
+{% endblock %}
