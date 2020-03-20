@@ -101,10 +101,10 @@ function read_email(email_id) {
         for (const key in email_data) {
             document.querySelector(`#${email_data[key]}`).textContent = email[key];
         }
-        // Toggle true/false for archiving based on current archived status.
+        // Toggle true/false buton label based on current archived status.
         document.querySelector('#read-archive').textContent = (email.archived ? 'Un-Archive' : 'Archive');
         show_view_div('view-read');
-        // Add current email values to local storage to allow archive toggle.
+        // Add current email values to local storage, its used by toggle_archive_flag().
         localStorage.setItem('active_email',
             JSON.stringify({
                 email_id: email.id,
@@ -133,9 +133,9 @@ function read_email(email_id) {
  * @param local_storage_key
  */
 function toggle_archive_flag(local_storage_key = "active_email",) {
-    // Get the active email data and update flags.
+    // Get the active email data.
     const data = JSON.parse(localStorage.getItem(local_storage_key));
-    // Call the api with flags provided.
+    // Call the api and toggle archived flags.
     fetch(`/emails/${data.email_id}`, {
         method: 'PUT',
         body: JSON.stringify({
