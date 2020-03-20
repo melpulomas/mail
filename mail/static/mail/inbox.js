@@ -91,23 +91,36 @@ function read_email(email_id) {
             return response.json();
         }).then(email => {
         // Display email.
-        document.querySelector('#read-from').textContent = email.sender;
-        document.querySelector('#read-recipients').textContent = email.recipients;
-        document.querySelector('#read-timestamp').textContent = email.timestamp;
-        document.querySelector('#read-subject').textContent = email.subject;
-        document.querySelector('#read-body').textContent = email.body;
+        const email_data = {
+            sender: 'read-from',
+            recipients: 'read-recipients',
+            timestamp: 'read-timestamp',
+            subject: 'read-subject',
+            body: 'read-body'
+        }
+        for (const key in email_data) {
+            document.querySelector(`#${email_data[key]}`).textContent = email[key];
+        }
         // Toggle true/false for archiving based on current archived status.
         document.querySelector('#read-archive').textContent = (email.archived ? 'Un-Archive' : 'Archive');
         show_view_div('view-read');
         // Add current email values to local storage to allow archive toggle.
-        localStorage.setItem('active_email', JSON.stringify({
-            email_id: email.id,
-            archived: email.archived,
-            read: true
-        }));
-        // If required, update the email to read, leave archived flag unchanged.
+        localStorage.setItem('active_email',
+            JSON.stringify({
+                email_id: email.id,
+                archived: email.archived,
+                read: true
+            }));
+        // If required, update the email to read.
         if (!email.read)
-            update_email_flags(email.id, true, email.archived);
+            fetch(`/emails/${email.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    read: true
+                })
+            }).then(response => {
+                if (!response.ok) throw Error(response.status + ' - ' + response.statusText);
+            })
     }).catch(error => {
         document.querySelector('#view-error').innerHTML = `<h1>A Problem Occurred.</h1><p>${error.message}</p>`;
         show_view_div('view-error');
@@ -122,33 +135,21 @@ function read_email(email_id) {
 function toggle_archive_flag(local_storage_key = "active_email",) {
     // Get the active email data and update flags.
     const data = JSON.parse(localStorage.getItem(local_storage_key));
-    update_email_flags(data.email_id, true, !data.archived);
-    load_mailbox('inbox');
-}
-
-/**
- * Updates the archived and read flags on the requested email and
- * displays the inbox. This method will default 'read' to true and
- * 'archived' to false.
- *
- * @param email_id
- * @param read
- * @param archived
- */
-function update_email_flags(email_id, read = true, archived = false) {
     // Call the api with flags provided.
-    fetch(`/emails/${email_id}`, {
+    fetch(`/emails/${data.email_id}`, {
         method: 'PUT',
         body: JSON.stringify({
-            archived: archived,
-            read: read
+            archived: !data.archived,
+            read: true
         })
-        // TODO: error handling
     }).then(response => {
         if (!response.ok) {
-            throw Error(response.statusText)
+            throw Error(response.status + ' - ' + response.statusText);
         }
+        load_mailbox('inbox');
     }).catch(error => {
+        document.querySelector('#view-error').innerHTML = `<h1>A Problem Occurred.</h1><p>${error.message}</p>`;
+        show_view_div('view-error');
         console.log(error);
     })
 }
@@ -169,8 +170,8 @@ function show_view_div(view_div) {
  * @returns {boolean}
  */
 function submit_form() {
-    // Validate the email form fields, all are required.
     // TODO: should all fields be required?
+    // Validate the email form fields, all are required.
     let form_valid = document.querySelector('#form-compose-recipients').value != '';
     document.querySelectorAll(`[id*="form-compose"]`).forEach((item) => {
         if (!item.value) {
@@ -187,7 +188,7 @@ function submit_form() {
             body: JSON.stringify({
                 recipients: document.querySelector('#form-compose-recipients').value,
                 subject: document.querySelector('#form-compose-subject').value,
-                body: document.querySelector('#form-compose-body').value.value,
+                body: document.querySelector('#form-compose-body').value,
                 read: false,
                 archived: false
             })
