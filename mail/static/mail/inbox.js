@@ -15,12 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
- * Resets and displays the create email form.
+ * Resets and displays the compose email form.
  */
 function compose_email() {
     // Show compose view and hide other views
     show_view_div('view-compose');
-
     // Clear out composition fields and reset field validation
     document.querySelectorAll(`[id*="form-compose"]`).forEach((item) => {
         item.value = '';
@@ -35,7 +34,6 @@ function compose_email() {
  * @param mailbox
  */
 function load_mailbox(mailbox) {
-
     // Un-Read emails have a default (light) background but read emails have a dark one.
     const read_style = 'list-group-item-secondary';
     const default_style = 'list-group-item list-group-item-action ';
@@ -55,13 +53,13 @@ function load_mailbox(mailbox) {
             // Create a new div with anchor for each email.
             emails.forEach(function (email) {
                 const list_group_item = document.createElement('a');
+                list_group_item.addEventListener('click', () => {
+                    read_email(email.id, (mailbox === 'sent'));
+                });
                 list_group_item.className = default_style + (email.read ? read_style : '');
-                list_group_item.href = '#'; // Adding this so the user gets expected link mouse behaviour.
                 list_group_item.innerHTML = `<strong>${email.sender}</strong><br/>${email.subject}`
                     + `<br/><span class="small text-right">${email.timestamp}</span>`;
-                list_group_item.addEventListener('click', () => {
-                    read_email(email.id);
-                })
+                list_group_item.href = '#'; // Gives an active link style to the element.
                 element.append(list_group_item);
             })
             // Show the mailbox and hide other views
@@ -77,14 +75,14 @@ function load_mailbox(mailbox) {
  * Retrieves all data associated with an email_id
  * and displays in #view_read. Also, marks the email as read
  * and stores requested email in localStorage to allow for
- * archive/unarchive.
+ * archive/unarchive, if required.
  *
  * @param email_id
+ * @param hide_archive
  */
-function read_email(email_id) {
+function read_email(email_id, hide_archive = false) {
     fetch(`/emails/${email_id}`)
         .then(response => {
-            // Detect errors from the API.
             if (!response.ok) {
                 throw Error(response.status + ' - ' + response.statusText);
             }
@@ -101,16 +99,23 @@ function read_email(email_id) {
         for (const key in email_data) {
             document.querySelector(`#${email_data[key]}`).textContent = email[key];
         }
-        // Toggle true/false buton label based on current archived status.
-        document.querySelector('#read-archive').textContent = (email.archived ? 'Un-Archive' : 'Archive');
+        // Hide archive buttons for sent mail.
+        const archive_button = document.querySelector('#read-archive');
+        if (hide_archive) {
+            archive_button.style.display = 'none';
+        } else {
+            archive_button.style.display = 'block';
+            // Toggle true/false button label based on current archived status.
+            archive_button.textContent = (email.archived ? 'Un-Archive' : 'Archive');
+            // Add current email values to local storage, its used by toggle_archive_flag().
+            localStorage.setItem('active_email',
+                JSON.stringify({
+                    email_id: email.id,
+                    archived: email.archived,
+                    read: true
+                }));
+        }
         show_view_div('view-read');
-        // Add current email values to local storage, its used by toggle_archive_flag().
-        localStorage.setItem('active_email',
-            JSON.stringify({
-                email_id: email.id,
-                archived: email.archived,
-                read: true
-            }));
         // If required, update the email to read.
         if (!email.read)
             fetch(`/emails/${email.id}`, {
@@ -132,7 +137,7 @@ function read_email(email_id) {
  * Gets the active email from localStorage and toggles the archived flag.
  * @param local_storage_key
  */
-function toggle_archive_flag(local_storage_key = "active_email",) {
+function toggle_archive_flag(local_storage_key = "active_email") {
     // Get the active email data.
     const data = JSON.parse(localStorage.getItem(local_storage_key));
     // Call the api and toggle archived flags.
@@ -155,7 +160,7 @@ function toggle_archive_flag(local_storage_key = "active_email",) {
 }
 
 /**
- * Displays the request div and hides the remaining divs.
+ * Displays the request view div and hides the remaining view divs.
  * @param view_div
  */
 function show_view_div(view_div) {
@@ -165,24 +170,24 @@ function show_view_div(view_div) {
 }
 
 /** Validates the email form has all required data and calls
- * the Mail API to send users email.
+ * the Mail API to send email.
  *
  * @returns {boolean}
  */
 function submit_form() {
-    // TODO: should all fields be required?
     // Validate the email form fields, all are required.
-    let form_valid = document.querySelector('#form-compose-recipients').value != '';
-    document.querySelectorAll(`[id*="form-compose"]`).forEach((item) => {
-        if (!item.value) {
-            form_valid = false;
-            item.className = 'form-control is-invalid';
-        } else {
-            item.className = 'form-control is-valid';
-        }
-    })
+    let form_valid = function () {
+        // Loop through three form elements, if empty mark invalid and increment form_invalid_count.
+        let form_invalid_count = 0;
+        document.querySelectorAll(`[id*="form-compose"]`).forEach((item) => {
+            item.className = (!item.value ? 'form-control is-invalid' : 'form-control is-valid');
+            if (!item.value)
+                form_invalid_count++; //set a flag based on result of validation
+        })
+        return (form_invalid_count === 0);
+    }
     // All form fields have data.
-    if (form_valid) {
+    if (form_valid()) {
         fetch('/emails', {
             method: 'POST',
             body: JSON.stringify({

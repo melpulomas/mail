@@ -13,14 +13,36 @@
     <div id="view-error" class="alert alert-danger"></div>
     <div id="view-emails" class="list-group"></div>
     <div id="view-read" class="card card-body">
-        <h5 id="read-from" class="card-title"></h5>
-        <h6 id="read-recipients" class="card-subtitle mb-2 text-muted"></h6>
-        <h6 id="read-timestamp" class="card-subtitle mb-2 text-muted"></h6>
-        <p id="read-subject"></p>
-        <hr>
-        <p id="read-body"></p>
-        <button class="btn btn-primary mr-2" id="read-reply">Reply</button>
-        <button class="btn btn-secondary mr-2" id="read-archive"></button>
+        <div class="container">
+            <div class="row">
+                <div class="col"><strong>From: </strong><span id="read-from" class="card-title"></span></div>
+            </div>
+            <div class="row">
+                <div class="col"><small><b>Recipients:</b></small>
+                    <small id="read-recipients" class="card-subtitle mb-2 text-muted"></small></div>
+            </div>
+            <div class="row">
+                <div class="col"><small><b>Timestamp:</b> </small>
+                    <small id="read-timestamp" class="card-subtitle mb-2 text-muted"></small>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col"><strong>Subject: </strong><span id="read-subject"></span></div>
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col"><p id="read-body"></p></div>
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col-sm-1">
+                    <button class="btn-sm btn-primary" id="read-reply">Reply</button>
+                </div>
+                <div class="col-sm-3">
+                    <button class="btn-sm btn-secondary ml-2" id="read-archive"></button>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="view-compose">
         <h3>New Email</h3>
@@ -29,7 +51,8 @@
                 From: <input disabled class="form-control" value="{{ request.user.email }}">
             </div>
             <div class="form-group">
-                <small><strong>At least one recipient required</strong></small>
+                <small><strong>At least one recipient required. Multiple emails please seperate with a
+                    comma.</strong></small>
                 <input id="form-compose-recipients" data-label="Recipients" placeholder="To (required)"
                        class="form-control">
                 <div class="invalid-feedback font-weight-bold" id="compose-form-alert">Please include at least one
@@ -40,7 +63,7 @@
                 <small><strong>Please include a subject.</strong></small>
                 <input class="form-control" id="form-compose-subject" data-label="Subject"
                        placeholder="Subject (required)">
-                <div class="invalid-feedback font-weight-bold">Subject is not required, but recommended.</div>
+                <div class="invalid-feedback font-weight-bold">Subject is required.</div>
             </div>
             <small><strong>Write the body of the email.</strong></small>
             <textarea class="form-control" id="form-compose-body" data-label="Email Body"
