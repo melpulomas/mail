@@ -15,61 +15,55 @@
     <div id="view-read" class="card card-body">
         <div class="container">
             <div class="row">
-                <div class="col"><strong>From: </strong><span id="read-from" class="card-title"></span></div>
+                <div class="col"><strong>Sender: </strong><span id="sender" class="card-title"></span></div>
             </div>
             <div class="row">
-                <div class="col"><small><b>Recipients:</b></small>
-                    <small id="read-recipients" class="card-subtitle mb-2 text-muted"></small></div>
+                <div class="col-sm-12"><b>Recipients:</b>
+                    <span id="recipients" class="card-subtitle mb-2 text-muted"></span></div>
             </div>
             <div class="row">
-                <div class="col"><small><b>Timestamp:</b> </small>
-                    <small id="read-timestamp" class="card-subtitle mb-2 text-muted"></small>
+                <div class="col-sm-12"><strong>Subject: </strong><span id="subject"></span></div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <small id="timestamp" class="card-subtitle mb-2 text-muted"></small>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col"><strong>Subject: </strong><span id="read-subject"></span></div>
             </div>
             <hr/>
             <div class="row">
-                <div class="col"><p id="read-body"></p></div>
+                <div class="col-sm-12"><p id="body"></p></div>
             </div>
             <hr/>
             <div class="row">
-                <div class="col-sm-1">
-                    <button class="btn-sm btn-primary" id="read-reply">Reply</button>
-                </div>
-                <div class="col-sm-3">
-                    <button class="btn-sm btn-secondary ml-2" id="read-archive"></button>
+                <div class="input-group">
+                    <button class="btn-sm btn-success" id="read-reply" data-email="">Reply</button>
+                    <button class="btn-sm btn-secondary ml-2" id="read-archive" data-email="" data-archived=""></button>
                 </div>
             </div>
         </div>
     </div>
     <div id="view-compose">
-        <h3>New Email</h3>
+        <div id="compose-title"><h3>New Email</h3></div>
         <form id="compose-form">
             <div class="form-group">
-                From: <input disabled class="form-control" value="{{ request.user.email }}">
+                <input disabled class="form-control" value="{{ request.user.email }}">
             </div>
             <div class="form-group">
-                <small><strong>At least one recipient required. Multiple emails please seperate with a
-                    comma.</strong></small>
-                <input id="form-compose-recipients" data-label="Recipients" placeholder="To (required)"
-                       class="form-control">
-                <div class="invalid-feedback font-weight-bold" id="compose-form-alert">Please include at least one
+                <strong>Recipients: </strong><small>At least one recipient required, for multiples use commas.</small>
+                <input id="form-recipients" class="form-control">
+                <div class="invalid-feedback font-weight-bold" id="recipients-alert">Please include at least one
                     recipient.
                 </div>
             </div>
             <div class="form-group">
-                <small><strong>Please include a subject.</strong></small>
-                <input class="form-control" id="form-compose-subject" data-label="Subject"
-                       placeholder="Subject (required)">
+                <strong>Subject:</strong> <small>Please include a subject.</small>
+                <input class="form-control" id="form-subject">
                 <div class="invalid-feedback font-weight-bold">Subject is required.</div>
             </div>
-            <small><strong>Write the body of the email.</strong></small>
-            <textarea class="form-control" id="form-compose-body" data-label="Email Body"
-                      placeholder="Body (required)"></textarea>
+            <strong>Email:</strong> <small>Write the body of the email.</small>
+            <textarea class="form-control" id="form-body"></textarea>
             <div class="invalid-feedback font-weight-bold">Please include a body for this email.</div>
-            <input type="submit" class="btn btn-primary my-2"/>
+            <input type="submit" class="btn btn-success my-2"/>
         </form>
     </div>
 {% endblock %}
