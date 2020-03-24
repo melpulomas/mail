@@ -20,6 +20,52 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
+ * Gets all emails in mailbox requested and
+ * displays them in #view-emails.
+ *
+ * @param mailbox
+ */
+function load_mailbox(mailbox) {
+    // Un-Read emails have a default (light) background but read emails have a dark one.
+    const read_style = 'list-group-item-secondary';
+    const default_style = 'list-group-item list-group-item-action ';
+
+    fetch(`/emails/${mailbox}`)
+        .then(response => {
+            // Detect errors from the API.
+            if (!response.ok) {
+                throw Error(response.status + ' - ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(emails => {
+            // Add title and content to #emails-view div for display
+            const element = document.querySelector('#view-emails');
+            element.innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+            // Show the mailbox and hide other views
+            show_view_div('view-emails');
+            // Handle a mailbox with no emails.
+            if (emails.length === 0)
+                return element.innerHTML += '<h3>No Emails Found.</h3>';
+            // Create a new div with anchor for each email.
+            let tester = emails.forEach(function (email) {
+                const list_group_item = document.createElement('a');
+                list_group_item.addEventListener('click', () => {
+                    read_email(email.id, (mailbox === 'sent'));
+                });
+                list_group_item.className = default_style + (email.read ? read_style : '');
+                list_group_item.innerHTML = `<strong>Sender:</strong> ${email.sender}<br/><b>Recipients:</b>`
+                    + ` ${email.recipients}<br/><b>Subject:</b> ${email.subject}`
+                    + `<br/><span class="small text-right">${email.timestamp}</span>`;
+                list_group_item.href = '#'; // Gives an active link style to the element.
+                element.append(list_group_item);
+            })
+        }).catch(error => {
+        handle_error(error);
+    });
+}
+
+/**
  * Resets and displays the compose email form.
  */
 function compose_email() {
@@ -33,11 +79,38 @@ function compose_email() {
 }
 
 /**
+ * Toggles the archived flag for the email id specified and loads the inbox.
+ * @param email_id
+ */
+function toggle_archive_flag(email_id, archived) {
+    // Call the api and toggle archived flags.
+    put_email_flags(email_id, true, !(archived === 'true'), () => {
+        load_mailbox('inbox');
+    });
+}
+
+function reply_email(email_id) {
+    get_process_email(email_id, (email) => {
+        const email_data = {sender: 'form-recipients', subject: 'form-subject', body: 'form-body'}
+        for (const key in email_data) {
+            if (key === 'subject')
+                email[key] = (email.subject.startsWith('Re: ') ? email.subject : "Re: " + email.subject);
+            if (key === 'body')
+                email[key] = `\n===========\nOn ${email.timestamp} ${email.sender} wrote:`
+                    + ` \n${email.body}`;
+            document.querySelector(`#${email_data[key]}`).value = email[key];
+        }
+        document.querySelector('#compose-title').innerHTML = `<h3>Reply to Email</h3>`;
+        show_view_div('view-compose');
+    });
+}
+
+/**
  * Retrieves an email and processes it per the process() function.
  * @param email_id
  * @param process function to process the email data.
  */
-function process_email(email_id, process) {
+function get_process_email(email_id, process) {
     fetch(`/emails/${email_id}`)
         .then(response => {
             if (!response.ok) {
@@ -53,24 +126,9 @@ function process_email(email_id, process) {
         })
 }
 
-function reply_email(email_id) {
-    process_email(email_id, (email) => {
-        const email_data = {sender: 'form-recipients', subject: 'form-subject', body: 'form-body'}
-        for (const key in email_data) {
-            if (key === 'subject')
-                email[key] = (email.subject.startsWith('Re: ') ? email.subject : "Re: " + email.subject);
-            if (key === 'body')
-                email[key] = `\n===========\nOn ${email.timestamp} ${email.sender} wrote:`
-                    + ` \n${email.body}`;
-            document.querySelector(`#${email_data[key]}`).value = email[key];
-        }
-        document.querySelector('#compose-title').innerHTML = `<h3>Reply to Email</h3>`;
-        show_view_div('view-compose');
-    });
-}
 
 function read_email(email_id, hide_archive = false) {
-    process_email(email_id, (email) => {
+    get_process_email(email_id, (email) => {
         // Loop through the email display fields and set the data
         const email_data = ['sender', 'recipients', 'timestamp', 'subject', 'body'];
         email_data.forEach((key) => {
@@ -116,16 +174,6 @@ function put_email_flags(email_id, read = true, archived = false, process_respon
     })
 }
 
-/**
- * Toggles the archived flag for the email id specified and loads the inbox.
- * @param email_id
- */
-function toggle_archive_flag(email_id, archived) {
-    // Call the api and toggle archived flags.
-    put_email_flags(email_id, true, !(archived === 'true'), () => {
-        load_mailbox('inbox');
-    });
-}
 
 /** Validates the email form has all required data and calls
  * the Mail API to send email.
@@ -172,53 +220,6 @@ function submit_form() {
     //Stop form from submitting.
     return false;
 }
-
-/**
- * Gets all emails in mailbox requested and
- * displays them in #view-emails.
- *
- * @param mailbox
- */
-function load_mailbox(mailbox) {
-    // Un-Read emails have a default (light) background but read emails have a dark one.
-    const read_style = 'list-group-item-secondary';
-    const default_style = 'list-group-item list-group-item-action ';
-
-    fetch(`/emails/${mailbox}`)
-        .then(response => {
-            // Detect errors from the API.
-            if (!response.ok) {
-                throw Error(response.status + ' - ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(emails => {
-            // Add title and content to #emails-view div for display
-            const element = document.querySelector('#view-emails');
-            element.innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-            // Show the mailbox and hide other views
-            show_view_div('view-emails');
-            // Handle a mailbox with no emails.
-            if (emails.length === 0)
-                return element.innerHTML += '<h3>No Emails Found.</h3>';
-            // Create a new div with anchor for each email.
-            let tester = emails.forEach(function (email) {
-                const list_group_item = document.createElement('a');
-                list_group_item.addEventListener('click', () => {
-                    read_email(email.id, (mailbox === 'sent'));
-                });
-                list_group_item.className = default_style + (email.read ? read_style : '');
-                list_group_item.innerHTML = `<strong>Sender:</strong> ${email.sender}<br/><b>Recipients:</b>`
-                    + ` ${email.recipients}<br/><b>Subject:</b> ${email.subject}`
-                    + `<br/><span class="small text-right">${email.timestamp}</span>`;
-                list_group_item.href = '#'; // Gives an active link style to the element.
-                element.append(list_group_item);
-            })
-        }).catch(error => {
-        handle_error(error);
-    });
-}
-
 
 /**
  * Displays the request view div and hides the remaining view divs.
