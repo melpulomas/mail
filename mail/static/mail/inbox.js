@@ -48,7 +48,7 @@ function load_mailbox(mailbox) {
             if (emails.length === 0)
                 return element.innerHTML += '<h3>No Emails Found.</h3>';
             // Create a new div with anchor for each email.
-            let tester = emails.forEach(function (email) {
+            emails.forEach(function (email) {
                 const list_group_item = document.createElement('a');
                 list_group_item.addEventListener('click', () => {
                     read_email(email.id, (mailbox === 'sent'));
@@ -56,7 +56,7 @@ function load_mailbox(mailbox) {
                 list_group_item.className = default_style + (email.read ? read_style : '');
                 list_group_item.innerHTML = `<strong>Sender:</strong> ${email.sender}<br/><b>Recipients:</b>`
                     + ` ${email.recipients}<br/><b>Subject:</b> ${email.subject}`
-                    + `<br/><span class="small text-right">${email.timestamp}</span>`;
+                    + `<br/><span class="badge badge-info badge-pill">${email.timestamp}</span>`;
                 list_group_item.href = '#'; // Gives an active link style to the element.
                 element.append(list_group_item);
             })
@@ -80,17 +80,23 @@ function compose_email() {
 
 /**
  * Toggles the archived flag for the email id specified and loads the inbox.
+ *
  * @param email_id
  */
 function toggle_archive_flag(email_id, archived) {
     // Call the api and toggle archived flags.
-    put_email_flags(email_id, true, !(archived === 'true'), () => {
+    update_email_flags(email_id, true, !(archived === 'true'), () => {
         load_mailbox('inbox');
     });
 }
 
+/**
+ * Retrieve an email, format and pre-populate the data in the compose email form.
+ *
+ * @param email_id
+ */
 function reply_email(email_id) {
-    get_process_email(email_id, (email) => {
+    get_email(email_id, (email) => {
         const email_data = {sender: 'form-recipients', subject: 'form-subject', body: 'form-body'}
         for (const key in email_data) {
             if (key === 'subject')
@@ -106,11 +112,12 @@ function reply_email(email_id) {
 }
 
 /**
- * Retrieves an email and processes it per the process() function.
+ * Retrieves an email and processes it per the callback function provided.
+ *
  * @param email_id
- * @param process function to process the email data.
+ * @param process_response function to process the email data.
  */
-function get_process_email(email_id, process) {
+function get_email(email_id, process_response) {
     fetch(`/emails/${email_id}`)
         .then(response => {
             if (!response.ok) {
@@ -119,22 +126,28 @@ function get_process_email(email_id, process) {
             return response.json();
         })
         .then(email => {
-            return process(email);
+            return process_response(email);
         })
         .catch(error => {
             handle_error(error);
         })
 }
 
-
+/**
+ * Retrieve an email and display the contents in #view-read. Also, sets up dataset attribute
+ * of Archive and Reply buttons.
+ *
+ * @param email_id
+ * @param hide_archive
+ */
 function read_email(email_id, hide_archive = false) {
-    get_process_email(email_id, (email) => {
+    get_email(email_id, (email) => {
         // Loop through the email display fields and set the data
         const email_data = ['sender', 'recipients', 'timestamp', 'subject', 'body'];
         email_data.forEach((key) => {
-            document.querySelector(`#${key}`).textContent = email[key];
+            document.querySelector(`#${key}`).innerText = email[key];
         });
-        // Load the reply and show/hide archive buttons.
+        // Load the reply button and show/hide archive buttons.
         document.querySelectorAll(`[id*="read-"]`).forEach((item) => {
             item.dataset.email = email.id;
             if (item.id === 'read-archive') {
@@ -148,14 +161,23 @@ function read_email(email_id, hide_archive = false) {
                 }
             }
         });
-        // // If required, update the email to read.
+        // If required, update the email to read.
         if (!email.read)
-            put_email_flags(email.id, true, email.archived);
+            update_email_flags(email.id, true, email.archived);
         show_view_div('view-read');
     })
 }
 
-function put_email_flags(email_id, read = true, archived = false, process_response) {
+/**
+ * Creates a PUT request with values provided to update email archive and/or read flags. Also,
+ * processes the data returned with callback function provided.
+ *
+ * @param email_id
+ * @param read
+ * @param archived
+ * @param process_response
+ */
+function update_email_flags(email_id, read = true, archived = false, process_response) {
     // Call the api and toggle archived flags.
     fetch(`/emails/${email_id}`, {
         method: 'PUT',
@@ -174,8 +196,8 @@ function put_email_flags(email_id, read = true, archived = false, process_respon
     })
 }
 
-
-/** Validates the email form has all required data and calls
+/**
+ * Validates the email form  for required data and calls
  * the Mail API to send email.
  *
  * @returns {boolean}
@@ -222,7 +244,7 @@ function submit_form() {
 }
 
 /**
- * Displays the request view div and hides the remaining view divs.
+ * Displays the requested view div and hides the remaining view divs.
  * @param view_div
  */
 function show_view_div(view_div) {
@@ -232,7 +254,7 @@ function show_view_div(view_div) {
 }
 
 /**
- * Displays the error message to the user and logs to the console.
+ * Displays error message to the user and logs to the console.
  * @param error
  */
 function handle_error(error) {
@@ -240,120 +262,3 @@ function handle_error(error) {
     show_view_div('view-error');
     console.log(error);
 }
-
-// TODO: remove these functions if testing goes well.
-// /**
-//  * Retrieves all data associated with an email_id
-//  * and displays in #view_read. Also, marks the email as read
-//  * and stores requested email in localStorage to allow for
-//  * archive/unarchive, if required.
-//  *
-//  * @param email_id
-//  * @param hide_archive
-//  */
-// function read_email(email_id, hide_archive = false) {
-//     fetch(`/emails/${email_id}`)
-//         .then(response => {
-//             if (!response.ok) {
-//                 throw Error(response.status + ' - ' + response.statusText);
-//             }
-//             return response.json();
-//         }).then(email => {
-//         // Display email.
-//
-//         const email_data = ['sender', 'recipients', 'timestamp', 'subject', 'body'];
-//         email_data.forEach((key) => {
-//             document.querySelector(`#${key}`).textContent = email[key];
-//         });
-//
-//         const reply_button = document.querySelector('#read-reply');
-//         reply_button.dataset.email = email.id;
-//
-//         const archive_button = document.querySelector('#read-archive');
-//         archive_button.dataset.email = email.id;
-//         archive_button.dataset.archived = email.archived;
-//         // Hide archive buttons for sent mail.
-//         if (hide_archive) {
-//             archive_button.style.display = 'none';
-//         } else {
-//             archive_button.style.display = 'block';
-//             // Toggle true/false button label based on current archived status.
-//             archive_button.textContent = (email.archived ? 'Un-Archive' : 'Archive');
-//             // Add current email values to local storage, its used by toggle_archive_flag().
-//             localStorage.setItem('active_email',
-//                 JSON.stringify({
-//                     email_id: email.id,
-//                     archived: email.archived,
-//                     read: true
-//                 }));
-//         }
-//         show_view_div('view-read');
-//         // If required, update the email to read.
-//         if (!email.read)
-//             fetch(`/emails/${email.id}`, {
-//                 method: 'PUT',
-//                 body: JSON.stringify({
-//                     read: true
-//                 })
-//             }).then(response => {
-//                 if (!response.ok) throw Error(response.status + ' - ' + response.statusText);
-//             })
-//     }).catch(error => {
-//         handle_error(error);
-//     });
-// }
-
-// /**
-//  * Toggles the archived flag for the email id specified.
-//  * @param email_id
-//  */
-// function toggle_archive_flag(email_id, archived) {
-//     // Call the api and toggle archived flags.
-//     fetch(`/emails/${email_id}`, {
-//         method: 'PUT',
-//         body: JSON.stringify({
-//             archived: !(archived === 'true'),
-//             read: true
-//         })
-//     }).then(response => {
-//         if (!response.ok) {
-//             throw Error(response.status + ' - ' + response.statusText);
-//         }
-//         load_mailbox('inbox');
-//     }).catch(error => {
-//         handle_error(error);
-//     })
-// }
-// function reply_email(local_storage_key = "active_email") {
-//     // Get the active email data.
-//     const data = JSON.parse(localStorage.getItem(local_storage_key));
-//
-//     // Call the api and get email info.
-//     fetch(`/emails/${data.email_id}`)
-//         .then(response => {
-//             if (!response.ok) {
-//                 throw Error(response.status + ' - ' + response.statusText);
-//             }
-//             return response.json();
-//         })
-//         .then(email => {
-//             const email_data = {
-//                 sender: 'form-recipients',
-//                 subject: 'form-subject',
-//                 body: 'form-body'
-//             }
-//             for (const key in email_data) {
-//                 if (key === 'subject')
-//                     email[key] = (email.subject.startsWith('Re: ') ? email.subject : "Re: " + email.subject);
-//                 if (key === 'body')
-//                     email[key] = `\n===========\nOn ${email.timestamp} ${email.sender} wrote:`
-//                         + ` \n${email.body}`;
-//                 document.querySelector(`#${email_data[key]}`).value = email[key];
-//             }
-//             document.querySelector('#compose-title').innerHTML = `<h3>Reply to Email</h3>`;
-//             show_view_div('view-compose');
-//         })
-//         .catch(error => {
-//             handle_error(error);
-//         })
-// }
