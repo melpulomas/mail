@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
     document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
     document.querySelector('#compose').addEventListener('click', compose_email);
-    //TODO: should I be able to use 'this'?
     document.querySelector('#read-archive').addEventListener('click', () => {
         const archive_button = document.querySelector('#read-archive');
         toggle_archive_flag(archive_button.dataset.email, archive_button.dataset.archived);
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#read-reply').addEventListener('click', () => {
         reply_email(document.querySelector('#read-reply').dataset.email);
     });
-    // Process form data on submit
     document.querySelector('#compose-form').onsubmit = submit_form;
     // By default, load the inbox
     load_mailbox('inbox');
@@ -46,7 +44,7 @@ function load_mailbox(mailbox) {
             // Handle a mailbox with no emails.
             if (emails.length === 0)
                 return element.innerHTML += '<h3>No Emails Found.</h3>';
-            // Create a new div with anchor for each email.
+            // Create a new anchor element for each email.
             emails.forEach(function (email) {
                 const list_group_item = document.createElement('a');
                 list_group_item.addEventListener('click', () => {
@@ -78,7 +76,7 @@ function compose_email() {
 }
 
 /**
- * Toggles the archived flag for the email id specified and loads the inbox.
+ * Toggles the archived flag for the email id specified and loads the inbox if successful.
  *
  * @param email_id
  */
@@ -114,7 +112,7 @@ function reply_email(email_id) {
  * Retrieves an email and processes it per the callback function provided.
  *
  * @param email_id
- * @param process_response function to process the email data.
+ * @param process_response function to process the email response.
  */
 function get_email(email_id, process_response) {
     fetch(`/emails/${email_id}`)
@@ -134,7 +132,7 @@ function get_email(email_id, process_response) {
 
 /**
  * Retrieve an email and display the contents in #view-read. Also, sets up dataset attribute
- * of Archive and Reply buttons.
+ * of Archive and Reply buttons. Hides the archive button if requested.
  *
  * @param email_id
  * @param hide_archive
@@ -168,8 +166,8 @@ function read_email(email_id, hide_archive = false) {
 }
 
 /**
- * Creates a PUT request with values provided to update email archive and/or read flags. Also,
- * processes the data returned with callback function provided.
+ * Creates a PUT request to update email archive and/or read flags. Also,
+ * processes the data returned with callback function parameter.
  *
  * @param email_id
  * @param read
@@ -196,8 +194,8 @@ function update_email_flags(email_id, read = true, archived = false, process_res
 }
 
 /**
- * Validates the email form  for required data and calls
- * the Mail API to send email.
+ * Validates the email form for required data and calls
+ * the Mail API to send email. Loads sent mailbox if successful.
  *
  * @returns {boolean}
  */
@@ -253,7 +251,7 @@ function show_view_div(view_div) {
 }
 
 /**
- * Displays error message to the user and logs to the console.
+ * Displays error message to the user and logs it to the console.
  * @param error
  */
 function handle_error(error) {

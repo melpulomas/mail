@@ -3,15 +3,18 @@
 
 {% block body %}
     <h2>{{ request.user.email }}</h2>
-
+    <!-- Main Navigation -->
     <button class="btn btn-sm btn-outline-primary" id="inbox">Inbox</button>
     <button class="btn btn-sm btn-outline-primary" id="compose">Compose</button>
     <button class="btn btn-sm btn-outline-primary" id="sent">Sent</button>
     <button class="btn btn-sm btn-outline-primary" id="archived">Archived</button>
     <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
     <hr>
+    <!-- Div for displaying error messages from the API and/or  -->
+    <!-- application level failures such as network             -->
     <div id="view-error" class="alert alert-danger"></div>
     <div id="view-emails" class="list-group"></div>
+    <!-- Full email display -->
     <div id="view-read">
         <div><h3>View Email</h3></div>
         <div class="container card card-body">
@@ -28,7 +31,6 @@
             <div class="row">
                 <div class="col-sm-12">
                     <span class="badge badge-info badge-pill" id="timestamp"></span>
-                    <!-- <small id="timestamp" class="card-subtitle mb-2 text-muted"></small> -->
                 </div>
             </div>
             <hr/>
@@ -39,8 +41,10 @@
             <div class="row">
                 <div class="col-sm-12">
                     <div class="input-group">
-                        <button class="btn-sm btn-success" id="read-reply" data-email="">Reply</button>
-                        <button class="btn-sm btn-secondary ml-2" id="read-archive" data-email=""
+                        <!-- Dataset values are set by read_email() which loads data to the #view-read div. -->
+                        <!-- Reply reply_email() or Archive toggle_archive_flag() functions use the dataset -->
+                        <button class="btn btn-sm btn-success" id="read-reply" data-email="">Reply</button>
+                        <button class="btn btn-sm btn-secondary ml-2" id="read-archive" data-email=""
                                 data-archived=""></button>
                     </div>
                 </div>
@@ -53,6 +57,7 @@
             <div class="form-group">
                 <input disabled class="form-control" value="{{ request.user.email }}">
             </div>
+            <!-- This form uses Bootstraps class=invalid-feedback to indicate validation from submit_form() -->
             <div class="form-group">
                 <strong>Recipients: </strong><small>At least one recipient required, for multiples use commas.</small>
                 <input id="form-recipients" class="form-control">
@@ -62,13 +67,13 @@
             </div>
             <div class="form-group">
                 <strong>Subject:</strong> <small>Please include a subject.</small>
-                <input class="form-control" id="form-subject">
+                <input class="form-control" id="form-subject" maxlength="255">
                 <div class="invalid-feedback font-weight-bold">Subject is required.</div>
             </div>
             <strong>Email:</strong> <small>Write the body of the email.</small>
             <textarea class="form-control" id="form-body"></textarea>
             <div class="invalid-feedback font-weight-bold">Please include a body for this email.</div>
-            <input type="submit" class="btn btn-success my-2"/>
+            <input type="submit" class="btn btn-sm btn-success my-2"/>
         </form>
     </div>
 {% endblock %}
