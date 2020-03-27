@@ -53,7 +53,7 @@ function load_mailbox(mailbox) {
                 list_group_item.href = '#'; // Gives an active link style to the element.
                 // Inbox does not display Recipients, Sent does not display Sender since they would be redundant.
                 let content = (mailbox !== 'sent' ? `<b>Sender:</b> ${email.sender} <br/>` : '');
-                content += (mailbox !== 'inbox' ? `<b>Recipients:</b> ${email.recipients} <br/>`: '');
+                content += (mailbox !== 'inbox' ? `<b>Recipients:</b> ${email.recipients} <br/>` : '');
                 content += `<b>Subject:</b> ${email.subject}<br/>`;
                 content += `<span class="badge badge-info badge-pill">${email.timestamp}</span>`;
                 list_group_item.innerHTML = content;
