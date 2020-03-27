@@ -4,12 +4,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
     document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
     document.querySelector('#compose').addEventListener('click', compose_email);
-    document.querySelector('#read-archive').addEventListener('click', () => {
-        const archive_button = document.querySelector('#read-archive');
-        toggle_archive_flag(archive_button.dataset.email, archive_button.dataset.archived);
+    document.querySelector('#read-archive').addEventListener('click', function () {
+        toggle_archive_flag(this.dataset.email, this.dataset.archived);
     });
-    document.querySelector('#read-reply').addEventListener('click', () => {
-        reply_email(document.querySelector('#read-reply').dataset.email);
+    document.querySelector('#read-reply').addEventListener('click', function () {
+        reply_email(this.dataset.email);
     });
     document.querySelector('#compose-form').onsubmit = submit_form;
     // By default, load the inbox
@@ -51,10 +50,13 @@ function load_mailbox(mailbox) {
                     read_email(email.id, (mailbox === 'sent'));
                 });
                 list_group_item.className = default_style + (email.read ? read_style : '');
-                list_group_item.innerHTML = `<strong>Sender:</strong> ${email.sender}<br/><b>Recipients:</b>`
-                    + ` ${email.recipients}<br/><b>Subject:</b> ${email.subject}`
-                    + `<br/><span class="badge badge-info badge-pill">${email.timestamp}</span>`;
                 list_group_item.href = '#'; // Gives an active link style to the element.
+
+                let content = (mailbox != 'sent' ? `<b>Sender:</b> ${email.sender} <br/>` : '');
+                content += (mailbox != 'inbox' ? `<b>Recipients:</b> ${email.recipients} <br/>`: '');
+                content += `<b>Subject:</b> ${email.subject}<br/>`;
+                content += `<span class="badge badge-info badge-pill">${email.timestamp}</span>`;
+                list_group_item.innerHTML = content;
                 element.append(list_group_item);
             })
         }).catch(error => {
