@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
- * Gets all emails in mailbox requested and
- * displays them in #view-emails.
+ * Gets all emails for mailbox requested and
+ * displays them in #view-emails div.
  *
  * @param mailbox
  */
@@ -51,9 +51,9 @@ function load_mailbox(mailbox) {
                 });
                 list_group_item.className = default_style + (email.read ? read_style : '');
                 list_group_item.href = '#'; // Gives an active link style to the element.
-                // Inbox does not display Recipients, Sent does not display Sender since they would be redundant.
-                let content = (mailbox !== 'sent' ? `<b>Sender:</b> ${email.sender} <br/>` : '');
-                content += (mailbox !== 'inbox' ? `<b>Recipients:</b> ${email.recipients} <br/>` : '');
+                // Inbox does not display Recipient, Sent does not display Sender  be redundant.
+                let content = (mailbox !== 'sent' ? `<b>From:</b> ${email.sender} <br/>` : '');
+                content += (mailbox !== 'inbox' ? `<b>To:</b> ${email.recipients} <br/>` : '');
                 content += `<b>Subject:</b> ${email.subject}<br/>`;
                 content += `<span class="badge badge-info badge-pill">${email.timestamp}</span>`;
                 list_group_item.innerHTML = content;
@@ -90,7 +90,7 @@ function toggle_archive_flag(email_id, archived) {
 }
 
 /**
- * Retrieve an email, format and pre-populate the data in the compose email form.
+ * Retrieves an email, format and pre-populate email data into the compose email form.
  *
  * @param email_id
  */
@@ -133,8 +133,8 @@ function get_email(email_id, process_response) {
 }
 
 /**
- * Retrieve an email and display the contents in #view-read. Also, sets up dataset attribute
- * of Archive and Reply buttons. Hides the archive button if requested.
+ * Retrieve an email and display the contents in #view-read. Also, sets a dataset attribute
+ * of Archive and Reply buttons and hides the archive button if requested.
  *
  * @param email_id
  * @param hide_archive
@@ -169,7 +169,7 @@ function read_email(email_id, hide_archive = false) {
 
 /**
  * Creates a PUT request to update email archive and/or read flags. Also,
- * processes the data returned with callback function parameter.
+ * processes the data returned with callback function provided.
  *
  * @param email_id
  * @param read
@@ -243,7 +243,7 @@ function submit_form() {
 }
 
 /**
- * Displays the requested view div and hides the remaining view divs.
+ * Displays the requested view-*div and hides the remaining view-*divs.
  * @param view_div
  */
 function show_view_div(view_div) {
