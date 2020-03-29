@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
- * Gets all emails for mailbox requested and
+ * Gets all email for mailbox requested and
  * displays them in #view-emails div.
  *
  * @param mailbox
@@ -35,10 +35,10 @@ function load_mailbox(mailbox) {
             return response.json();
         })
         .then(emails => {
-            // Add title and content to #emails-view div for display
+            // Add title and content to #emails-view div for display.
             const element = document.querySelector('#view-emails');
             element.innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-            // Show the mailbox and hide other views
+            // Show the mailbox and hide other views.
             show_view_div('view-emails');
             // Handle a mailbox with no emails.
             if (emails.length === 0)
@@ -51,10 +51,10 @@ function load_mailbox(mailbox) {
                 });
                 list_group_item.className = default_style + (email.read ? read_style : '');
                 list_group_item.href = '#'; // Gives an active link style to the element.
-                // Inbox does not display Recipient, Sent does not display Sender  be redundant.
+                // Inbox does not display Recipient and Sent mail does not display Sender.
                 let content = (mailbox !== 'sent' ? `<b>From:</b> ${email.sender} <br/>` : '');
                 content += (mailbox !== 'inbox' ? `<b>To:</b> ${email.recipients} <br/>` : '');
-                content += `<b>Subject:</b> ${email.subject}<br/>`;
+                content += `<b>Subject:</b>` + (email.subject ? email.subject : ` (No Subject)`) + `<br/>`;
                 content += `<span class="badge badge-info badge-pill">${email.timestamp}</span>`;
                 list_group_item.innerHTML = content;
                 element.append(list_group_item);
@@ -68,9 +68,9 @@ function load_mailbox(mailbox) {
  * Resets and displays the compose email form.
  */
 function compose_email() {
-    // Show compose view and hide other views
+    // Show compose view and hide other views.
     show_view_div('view-compose');
-    // Clear out composition fields and reset field validation
+    // Clear out composition fields and reset field validation.
     document.querySelectorAll(`[id*="form-"]`).forEach((item) => {
         item.value = '';
         item.className = 'form-control';
@@ -90,20 +90,25 @@ function toggle_archive_flag(email_id, archived) {
 }
 
 /**
- * Retrieves an email, format and pre-populate email data into the compose email form.
+ * Retrieves an email, formats and pre-populate email data into the compose email form.
  *
  * @param email_id
  */
 function reply_email(email_id) {
     get_email(email_id, (email) => {
+        // Create an email data field & form field mapping.
         const email_data = {sender: 'form-recipients', subject: 'form-subject', body: 'form-body'}
+        // Loop and process the data where required or simply reset the form field.
         for (const key in email_data) {
             if (key === 'subject')
                 email[key] = (email.subject.startsWith('Re: ') ? email.subject : "Re: " + email.subject);
             if (key === 'body')
                 email[key] = `\n===========\nOn ${email.timestamp} ${email.sender} wrote:`
                     + ` \n${email.body}`;
-            document.querySelector(`#${email_data[key]}`).value = email[key];
+            const form_field = document.querySelector(`#${email_data[key]}`);
+            form_field.value = email[key];
+            // Reset any errors on the form that might exist from previous use.
+            form_field.className = 'form-control';
         }
         document.querySelector('#compose-title').innerHTML = `<h3>Reply to Email</h3>`;
         show_view_div('view-compose');
@@ -141,12 +146,13 @@ function get_email(email_id, process_response) {
  */
 function read_email(email_id, hide_archive = false) {
     get_email(email_id, (email) => {
-        // Loop through the email display fields and set the data
+        // Loop through the email display fields and set the data.
         const email_data = ['sender', 'recipients', 'timestamp', 'subject', 'body'];
         email_data.forEach((key) => {
-            document.querySelector(`#${key}`).innerText = email[key];
+            document.querySelector(`#${key}`).innerText =
+                (email[key] ? email[key] : `(No ` + key.charAt(0).toUpperCase() + key.slice(1) + ')');
         });
-        // Load the reply button and show/hide archive buttons.
+        // Load dataset for reply & archive buttons. Show/hide archive button and set its label.
         document.querySelectorAll(`[id*="read-"]`).forEach((item) => {
             item.dataset.email = email.id;
             if (item.id === 'read-archive') {
@@ -196,29 +202,29 @@ function update_email_flags(email_id, read = true, archived = false, process_res
 }
 
 /**
- * Validates the email form for required data and calls
+ * Validates the email form for recipients and calls
  * the Mail API to send email. Loads sent mailbox if successful.
  *
  * @returns {boolean}
  */
 function submit_form() {
-    // Validate the email form fields, all are required.
+    const input_recipients = document.querySelector('#form-recipients');
+    // Validate the form, recipients are required.
     let form_valid = function () {
-        // Loop through three form elements, if empty mark invalid and increment form_invalid_count.
-        let form_invalid_count = 0;
-        document.querySelectorAll(`[id*="form-"]`).forEach((item) => {
-            item.className = (!item.value ? 'form-control is-invalid' : 'form-control is-valid');
-            if (!item.value)
-                form_invalid_count++; //set a flag based on result of validation
-        })
-        return (form_invalid_count === 0);
+        // If recipients field is empty, mark as invalid and return false.
+        if (!input_recipients.value) {
+            input_recipients.className = 'form-control is-invalid';
+            return false;
+        }
+        input_recipients.className = 'form-control is-valid';
+        return true;
     }
-    // All form fields have data.
+    // Form is valid, store the email data.
     if (form_valid()) {
         fetch('/emails', {
             method: 'POST',
             body: JSON.stringify({
-                recipients: document.querySelector('#form-recipients').value,
+                recipients: input_recipients.value,
                 subject: document.querySelector('#form-subject').value,
                 body: document.querySelector('#form-body').value,
                 read: false,
@@ -250,6 +256,8 @@ function show_view_div(view_div) {
     document.querySelectorAll(`[id*="view-"]`).forEach((item) => {
         item.style.display = (view_div === item.id ? 'block' : 'none');
     })
+    // Reset focus to the top of the page.
+    document.body.scrollTop;
 }
 
 /**
